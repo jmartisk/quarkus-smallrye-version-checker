@@ -2,9 +2,6 @@ package org.example
 
 import io.quarkus.runtime.annotations.QuarkusMain
 import org.jboss.logging.Logger
-import org.jboss.shrinkwrap.resolver.api.maven.Maven
-import org.jboss.shrinkwrap.resolver.api.maven.ScopeType
-import org.jboss.shrinkwrap.resolver.api.maven.strategy.AcceptScopesStrategy
 
 @QuarkusMain
 class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
@@ -23,30 +20,26 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
                 logger.info("Checking component: ${it.name}")
 
                 val componentVersion = runtimeBom.resolveVersion(it.smallRyeGroupId, it.smallRyeArtifactId)
-                logger.info("${it.smallRyeGroupId}:${it.smallRyeArtifactId} version: $componentVersion")
+                logger.info("${it.smallRyeGroupId}:${it.smallRyeArtifactId} version used by Quarkus runtime: $componentVersion")
 
                 val tckPom = QuarkusMavenProject(quarkusRepo.getFile(it.tckPomPath).toFile())
-                val specVersion = tckPom.resolveVersion(it.tckGroupId, it.tckArtifactId)
-                logger.info("${it.tckGroupId}:${it.tckArtifactId} version: $specVersion")
+                val usedTckVersion = tckPom.resolveVersion(it.tckGroupId, it.tckArtifactId)
+                logger.info("${it.tckGroupId}:${it.tckArtifactId} version being tested in Quarkus: $usedTckVersion")
 
-                val candidates = Maven.configureResolver()
-                        .resolve("${it.smallRyeGroupId}:${it.smallRyeArtifactId}:jar:${componentVersion}")
-                        .using(AcceptScopesStrategy(ScopeType.PROVIDED, ScopeType.TEST, ScopeType.COMPILE))
-                        .asResolvedArtifact()
-                val specification = candidates.firstOrNull { artifact ->
-                    artifact.coordinate.artifactId == it.specArtifactId &&
-                            artifact.coordinate.groupId == it.specGroupId
-                }
-                if(specification != null) {
-                    logger.info("SmallRye project uses spec version ${specification.resolvedVersion}")
+                val specVersionUsedByProject = it.getSpecDependencyVersion(componentVersion)
+                if(specVersionUsedByProject != null) {
+                    logger.info("SmallRye project depends on spec version $specVersionUsedByProject")
+                    if(specVersionUsedByProject != usedTckVersion) {
+                        logger.warn("Quarkus tests a different TCK version than what the SmallRye project depends on!")
+                    }
                 } else {
-                    // FIXME: does not work for Reactive Messaging, because smallrye-reactive-messaging does not depend on
-                    // the official API at all. How do I find out what MP-RM version it is supposed to implement?
-                    // FIXME: does not work for Metrics either, but I don't understand why
                     logger.error("Could not find version of ${it.specGroupId}:${it.specArtifactId} " +
                             "dependency within ${it.smallRyeGroupId}:${it.smallRyeArtifactId}:jar:${componentVersion}")
                 }
             }
+            logger.info(" ")
+            logger.info("***********************************************")
+            logger.info(" ")
             return 0
         } catch (t: Throwable) {
             // never let the app fail by throwing an exception
