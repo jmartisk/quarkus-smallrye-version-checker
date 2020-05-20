@@ -2,18 +2,35 @@ package org.example
 
 import io.quarkus.runtime.annotations.QuarkusMain
 import org.jboss.logging.Logger
+import java.util.concurrent.atomic.AtomicBoolean
 
 @QuarkusMain
 class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
 
     val logger = Logger.getLogger("SmallRyeVersionChecker")
 
+    companion object {
+        val stopRequested = AtomicBoolean(false)
+
+        fun throwExceptionIfStopWasRequested() {
+            if (stopRequested.get()) {
+                throw StopRequested()
+            }
+        }
+    }
+
     override fun run(vararg args: String?): Int {
+        Runtime.getRuntime().addShutdownHook(Thread {
+            logger.info("Requesting stop of the script, " +
+                    "this might take a few seconds if there are active operations")
+            stopRequested.set(true)
+        })
         try {
             val quarkusRepo = QuarkusRepo()
             val runtimeBom = QuarkusMavenProject(quarkusRepo.getFile("bom/runtime/pom.xml").toFile())
 
             getCheckedComponents().forEach {
+                throwExceptionIfStopWasRequested()
                 logger.info(" ")
                 logger.info("***********************************************")
                 logger.info(" ")
@@ -27,9 +44,9 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
                 logger.info("${it.tckGroupId}:${it.tckArtifactId} version being tested in Quarkus: $usedTckVersion")
 
                 val specVersionUsedByProject = it.getSpecDependencyVersion(componentVersion)
-                if(specVersionUsedByProject != null) {
+                if (specVersionUsedByProject != null) {
                     logger.info("SmallRye project depends on spec version $specVersionUsedByProject")
-                    if(specVersionUsedByProject != usedTckVersion) {
+                    if (specVersionUsedByProject != usedTckVersion) {
                         logger.warn("Quarkus tests a different TCK version than what the SmallRye project depends on!")
                     }
                 } else {
@@ -45,7 +62,9 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
             // never let the app fail by throwing an exception
             // avoid "java.lang.IllegalStateException: Cannot reset a started application" in devmode
             // instead log the exception and return a non-zero value
-            logger.error("Version checker failed", t)
+            if (t !is StopRequested) {
+                logger.error("Version checker failed", t)
+            }
             return 1
         }
     }

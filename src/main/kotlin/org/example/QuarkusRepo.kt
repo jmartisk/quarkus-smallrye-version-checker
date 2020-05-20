@@ -14,6 +14,7 @@ class QuarkusRepo {
     val logger = Logger.getLogger("QuarkusRepo")
 
     init {
+        SmallRyeVersionChecker.throwExceptionIfStopWasRequested()
         targetDir = File("quarkus-repo")
 
         gitRepo = if (targetDir.exists()) {

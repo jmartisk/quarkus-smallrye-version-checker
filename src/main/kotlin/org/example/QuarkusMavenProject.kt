@@ -10,6 +10,7 @@ class QuarkusMavenProject(parentPom: File) {
             .loadPomFromFile(parentPom)
 
     fun resolveVersion(groupId: String, artifactId: String): String {
+        SmallRyeVersionChecker.throwExceptionIfStopWasRequested()
         val candidates = project
                 .importCompileAndRuntimeDependencies()
                 .resolve("$groupId:$artifactId")

@@ -21,6 +21,7 @@ data class SmallRyeComponent(val name: String,
     // the official API at all. How do I find out what MP-RM version it is supposed to implement?
     // FIXME: does not work for Metrics either, but I don't understand why
     fun getSpecDependencyVersion(smallRyeVersion: String): String? {
+        SmallRyeVersionChecker.throwExceptionIfStopWasRequested()
         val candidates = Maven.configureResolver()
                 .resolve("$smallRyeGroupId:$smallRyeArtifactId:jar:$smallRyeVersion")
                 .using(AcceptAllStrategy.INSTANCE)
