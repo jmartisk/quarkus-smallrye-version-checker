@@ -13,7 +13,9 @@ Currently, it obtains data from looking at the `master` branch of the official Q
 ## Running the checker
 ```
 mvn clean package && java -jar target/smallrye-version-checker-runner.jar
-```
+```    
+
+Or, to run within the IDE, create a run configuration that executes the `CheckerMain.kt` script.
 
 ## TODOs
 - Check whether the MP API used by Quarkus runtime is the same as the one declared by the SmallRye project
