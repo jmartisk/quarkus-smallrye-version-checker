@@ -7,7 +7,6 @@ import java.io.File
 class QuarkusMavenProject(parentPom: File) {
 
     val project: PomEquippedResolveStage = Maven.configureResolver()
-            .workOffline()
             .loadPomFromFile(parentPom)
 
     fun resolveVersion(groupId: String, artifactId: String): String {
