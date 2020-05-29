@@ -2,6 +2,7 @@ package org.example
 
 import io.quarkus.runtime.annotations.QuarkusMain
 import org.jboss.logging.Logger
+import picocli.CommandLine
 import java.util.concurrent.atomic.AtomicBoolean
 
 @QuarkusMain
@@ -25,8 +26,9 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
                     "this might take a few seconds if there are active operations")
             stopRequested.set(true)
         })
+        val arguments: Arguments = parseArguments(*args)
         try {
-            val quarkusRepo = QuarkusRepo()
+            val quarkusRepo = QuarkusRepo(url = arguments.url, ref = arguments.ref)
             val runtimeBom = QuarkusMavenProject(quarkusRepo.getFile("bom/runtime/pom.xml").toFile())
 
             getCheckedComponents().forEach {
@@ -67,6 +69,12 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
             }
             return 1
         }
+    }
+
+    fun parseArguments(vararg args: String?): Arguments {
+        val result = Arguments()
+        CommandLine(result).parseArgs(*args)
+        return result
     }
 
     fun getCheckedComponents(): Collection<SmallRyeComponent> {
