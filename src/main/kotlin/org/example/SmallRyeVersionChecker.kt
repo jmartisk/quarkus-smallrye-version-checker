@@ -1,5 +1,6 @@
 package org.example
 
+import io.quarkus.runtime.Quarkus
 import io.quarkus.runtime.annotations.QuarkusMain
 import org.jboss.logging.Logger
 import picocli.CommandLine
@@ -17,6 +18,11 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
             if (stopRequested.get()) {
                 throw StopRequested()
             }
+        }
+
+        // to run the script within an IDE, create a run configuration from this main method
+        @JvmStatic fun main(args: Array<String>) {
+            Quarkus.run(SmallRyeVersionChecker::class.java, *args)
         }
     }
 
