@@ -35,7 +35,7 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
         val arguments: Arguments = parseArguments(*args)
         try {
             val quarkusRepo = QuarkusRepo(url = arguments.url, ref = arguments.ref)
-            val runtimeBom = QuarkusMavenProject(quarkusRepo.getFile("bom/runtime/pom.xml").toFile())
+            val runtimeBom = QuarkusMavenProject(quarkusRepo.getFile("bom/application/pom.xml").toFile())
 
             getCheckedComponents().forEach {
                 throwExceptionIfStopWasRequested()
@@ -122,7 +122,7 @@ class SmallRyeVersionChecker : io.quarkus.runtime.QuarkusApplication {
                         "extensions/smallrye-jwt/pom.xml",
                         "tcks/microprofile-jwt/pom.xml"),
                 SmallRyeComponent("SmallRye OpenAPI",
-                        "io.smallrye", "smallrye-open-api",
+                        "io.smallrye", "smallrye-open-api-core",
                         "org.eclipse.microprofile.openapi", "microprofile-openapi-tck",
                         "org.eclipse.microprofile.openapi", "microprofile-openapi-api",
                         "extensions/smallrye-openapi/pom.xml",
